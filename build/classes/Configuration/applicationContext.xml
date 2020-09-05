@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.3.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd">
+
+<!-- 读入properties文件 -->
+<context:property-placeholder location="classpath:Properties/*.properties"   ignore-unresolvable="true"/>
+<!-- 配置dataSource 采用dbcp连接池 -->
+<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+
+			<property name="driverClassName" value="${driver}"></property>
+			
+			<property name="url" value="${url}"></property>
+			
+			<property name="username" value="yunzhi"></property>
+			
+			<property name="password" value="${password}"></property>
+			 <!-- 初始化连接大小 -->
+   			 <property name="initialSize" value="${initialSize}"></property>
+  			  <!-- 连接池最大数量 -->
+    		<property name="maxActive" value="${maxActive}"></property>
+    		<!-- 连接池最大空闲 -->
+    		<property name="maxIdle" value="${maxIdle}"></property>
+    		<!-- 连接池最小空闲 -->
+    		<property name="minIdle" value="${minIdle}"></property>
+    		<!-- 连接池是否开启无用连接回收机制 -->
+			<property name="removeAbandoned" value="${removeAbandoned}"></property>
+			<!-- sql心跳 -->
+			<!-- 定义开启Evict的定时校验 -->
+			<property name="testWhileIdle" value="true"></property>
+			<!-- 定义在进行borrowObject处理时，对得到的连接是否进行校验 -->
+			<property name="testOnBorrow" value="false"></property>
+			<!-- 定义在returnObject时，对返回的连接是否进行校验 -->
+			<property name="testOnReturn" value="false"></property>
+			<!-- 定义校验使用的sql语句 -->
+			<property name="validationQuery" value="select 1"></property>
+			<!-- 定义Evict的时间间隔，单位为毫秒 -->
+			<property name="timeBetweenEvictionRunsMillis" value="60000"></property>
+			<!-- 定义每次校验连接的数量 -->
+			<property name="numTestsPerEvictionRun" value="${maxActive}"></property>
+</bean>
+
+
+<!-- 配置事务管理器 -->
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	<property name="dataSource" ref="dataSource" />
+</bean>
+<!-- 声明可以注解添加事务 -->
+<tx:annotation-driven transaction-manager="transactionManager"/>
+
+<!-- 配置sqlSessionFactory -->
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	<property name="dataSource" ref="dataSource" />
+		<!-- 导入mybatis配置文件 -->
+	<property name="configLocation" value="classpath:Configuration/mybatis-config.xml" />
+	
+	<property name="mapperLocations" value="classpath*:mapperXML/*.xml"></property>
+</bean>
+
+
+<!-- 配置注入映射器  动态产生mapper接口的实现类  （sqlSessionTemplate）-->
+<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	 	<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+	 	<property name="basePackage" value="cn.xust.mapper" />
+</bean>
+
+
+<!-- 声明添加注解Aop -->
+<aop:aspectj-autoproxy proxy-target-class="true"/>
+
+
+<!--配置邮件接口-->
+<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+     <property name="host" value="${mail.smtp.host}"/>
+     <property name="username" value="${mail.smtp.username}"/>
+     <property name="password" value="${mail.smtp.password}"/>
+     <property name="defaultEncoding" value="${mail.smtp.defaultEncoding}"/>
+     <property name="javaMailProperties">
+         <props>
+             <prop key="mail.smtp.auth">${mail.smtp.auth}</prop>
+             <prop key="mail.smtp.timeout">${mail.smtp.timeout}</prop>
+         </props>
+     </property>
+</bean>
+
+
+
+<!--1. 配置securityManager安全管理器 -->
+    <!-- 
+    	SecurityManager：安全管理器；即所有与安全有关的操作都会与SecurityManager交互；
+		且它管理着所有Subject；可以看出它是Shiro 的核心，它负责与后边介绍的其他组件进行交互
+     -->
+ 	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="realm" ref="shiroDbRealm" />
+       <!-- 配置sessionManager，提供session管理 -->
+		<property name="sessionManager" ref="sessionManager"></property>
+
+    </bean>
+    
+ 
+	
+	
+	  
+    <!-- shiro结合Session会话管理器 start -->
+     <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+        <!-- 是否开启会话验证器，默认是开启的 -->
+        <property name="sessionValidationSchedulerEnabled" value="false"/>
+    </bean>
+
+   
+   
+    
+    
+    
+    
+	
+	<!--3.配置realm 自定义的Realm-->
+    <!-- 
+    	Shiro 从从Realm获取安全数据（如用户、角色、权限），就是说SecurityManager要验证用户身份，
+    	那么它需要从Realm获取相应的用户进行比较以确定用户身份是否合法；
+		也需要从Realm得到用户相应的角色/权限进行验证用户是否能进行操作；
+		可以把Realm看成DataSource ， 即安全数据源 
+	-->
+    <bean id="shiroDbRealm" class="cn.xust.realm.accountRealm"></bean>
+    
+    <!--4.配置lifecycleBeanPostProcessor，可以自动调用spring ioc 容器中的shiro bean 的生命周期方法  -->
+    <!-- 开启Shiro注解的Spring配置方式的beans。在lifecycleBeanPostProcessor之后运行 -->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor" />
+    
+    <!--5. 启用 IOC 容器中使用 shiro 的注解. 但必须在配置了 LifecycleBeanPostProcessor 之后才可以使用. -->     
+    <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"
+          depends-on="lifecycleBeanPostProcessor">
+          <property name="proxyTargetClass" value="true" />
+    </bean>
+    
+    <!-- Shiro Filter id值和web.xml文件配置的过滤器名称相同 -->
+    <bean id="shiroFilter"
+        class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager" />
+        
+        <!-- Shiro过滤器链 -->
+        <property name="filters">
+        	<util:map>
+            	<entry key="jwt" value-ref="JWT" />
+        	</util:map>
+        </property>
+    
+        
+        <property name="filterChainDefinitions">
+            <value>
+             /user/login = anon
+             /user/register = anon
+             /user/email = anon
+             /user/getAcadamy = anon
+             /user/getMajor = anon
+             /user/upload_image = anon
+             /tourist/** = anon
+             /AVATAR_URL/** = anon
+             /TEACHER_IMAGE/** = anon
+             /admin/image = anon
+             /** = jwt
+           
+		   </value>
+        </property>
+    </bean>
+
+  	<!-- 开启Shiro注解的Spring配置方式的beans。在lifecycleBeanPostProcessor之后运行 -->
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager" />
+    </bean>
+    
+ 
+    
+  
+    
+    <bean  id="JWT" class="cn.xust.filter.JWTFilter">
+    </bean>
+    
+    
+    
+    <context:annotation-config/>
+    
+    
+    
+
+</beans>
+
+
+
+
+

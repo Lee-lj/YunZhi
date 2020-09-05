@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper  namespace="cn.xust.mapper.UserMapper">
+	
+		
+		<!-- 根据学号/工号 和密码查询用户信息 -->
+		
+		
+		<select id="selectSingle" resultType="cn.xust.pojo.User">
+		select UUID,ACCOUNT,REAL_NAME,MAJOR,AVATAR_URL,STATUS  from user where PASSWORD = #{password} and ACCOUNT = #{account} and IS_ACTIVATE = 1
+		</select>
+		
+	   
+	   <!-- 用于用户账户注册-->
+	   <!-- 动态注册 -->
+	   <insert id="addSingle" parameterType="cn.xust.pojo.User" >
+	   insert into user(ACCOUNT ,PASSWORD ,REAL_NAME,MAJOR,EMAIL,STATUS,IS_ACTIVATE) 
+	   values(#{account},#{password},#{realName},#{major},#{email},#{status},#{isActivate})
+	   </insert>
+	   
+	   <!-- 动态根据 学号/工号 查询密码 -->
+	   <select id="selectPassword" resultType="String">
+	  	 select PASSWORD  from user where ACCOUNT = #{account} and IS_ACTIVATE = 1
+	   </select>
+	   
+	   <!-- 查询数据库中是否曾经有该账号 -->
+	    <select id="selectEverExit" resultType="int">
+	  	 select count(*)  from user where ACCOUNT = #{account}
+	   </select>
+	   
+	   
+	   
+	   <!-- 根据专业名字查询专业的id -->
+	   <select id="selectMajorId" resultType="int">
+	   	select IFNULL(max(id),-1) from major where major_name = #{majorName}
+	   </select>
+	   
+	   
+	   
+	   
+	   <!-- 上传用户头像 -->
+	   <update id="uploadAVATARURL" parameterType="cn.xust.pojo.User">
+	   update user set AVATAR_URL=#{avatarUrl} where UUID = #{uuid}
+	   </update>
+	   
+	   
+	   <!-- 用于修改用户信息 -->
+	   <update id="updateUser" parameterType="cn.xust.pojo.User">
+	    update user
+	     <trim prefix="set" suffixOverrides=",">
+		  <if test="avatarUrl!=null">AVATAR_URL=#{avatarUrl},</if>
+		  <if test="userName!=null">USERNAME=#{userName},</if>
+		  <if test="email!=null">EMAIL=#{email},</if>
+		  <if test="role!=null">ROLE=#{role},</if>
+		 </trim>
+  		where UUID=#{uuid}
+	   </update>
+	   
+	   <!-- 查询学院信息 -->
+	   <select id="selectAcadamy" resultType="cn.xust.pojo.Acadamy">
+	   		select * from acadamy order by id
+	   </select>
+		
+		<!-- 根据学院id查询专业信息 -->
+		<select id="selectMajor" resultType="cn.xust.pojo.Major" >
+			select id,major_name from major where college_id=#{acadamyID} order by id 
+		</select>
+		
+		
+		<!-- 存储意见反馈 -->
+		<insert id="insertAdvice" parameterType="cn.xust.pojo.Advice" >
+			insert into feedback(name,content) values (#{name},#{content})
+		</insert>
+
+		<!-- 保存用户中心的信息 -->
+		<update id="keep">
+			update user set AVATAR_URL = #{avatarUrl} where UUID = #{uuid}
+		</update>
+		
+		<!-- 更改密码 -->
+		<update id="changePW" parameterType="cn.xust.pojo.User">
+			update user set PASSWORD = #{password} where UUID = #{uuid}
+		</update>
+		
+		<!-- 个人中心 -->
+		<select id="detailUser" resultType="cn.xust.pojo.UserHelper">
+			select ACCOUNT,REAL_NAME,EMAIL,AVATAR_URL,STATUS,IS_ACTIVATE,COLLEGE_NAME,MAJOR_NAME from user,acadamy,major where user.major = major.id and major.college_id = acadamy.id
+			and user.uuid = #{uuid}
+		</select>
+		
+		<!-- 根据登录账户id查询专属学院的老师 -->
+		<select id="selectTeachers" resultType="cn.xust.pojo.User">
+			select UUID,REAL_NAME from user where user.major in (select major.id from major where major.college_id = (select major.college_id from major where major.id = #{major}))
+			and STATUS=1 and IS_ACTIVATE=1
+		</select>
+		
+		<!-- 增加问题 -->
+		<insert id="insertQuestion" parameterType="cn.xust.pojo.Question" useGeneratedKeys="true" keyProperty="id">
+			insert into question(CONTENT,ASK_ID,TIME,IS_ANSWER) values(#{content},#{askID},#{time},0)
+		</insert>
+		
+		<!--  增加待回复的答案-->
+		<insert id="insertAnswers">
+			insert into answer(QUESTION_ID,ANSWER_ID,IS_ANSWER) values
+				<foreach collection="answers" item="item" separator=",">
+		 (		#{item.questionID},
+				#{item.answerID},
+				0
+		 )
+			</foreach>
+		</insert>
+		
+		<!-- 学生 : 列出所有问题 -->
+		<select id="selectQuestions" resultType="cn.xust.pojo.Question" >
+			select ID,CONTENT,TIME,IS_ANSWER from question where ASK_ID = #{uuid} order by IS_ANSWER desc,TIME desc
+		</select>
+		
+		<!-- 通用: 用于查看问题详情时显示问题的全部信息 -->
+		<select id="selectQuestionHelp" resultType="cn.xust.pojo.AnswerHelper">
+			select ID,CONTENT,TIME,REAL_NAME,AVATAR_URL from user,question where ASK_ID=UUID and ID=#{questionID}
+		</select>
+		
+		<!-- 学生:查看主回复 -->
+		<select id="selectMainQuestion" resultType="cn.xust.pojo.AnswerHelper">
+			select ID,CONTENT,TIME,REAL_NAME,AVATAR_URL from user,answer where ANSWER_ID=UUID and QUESTION_ID=#{questionID} and IS_ANSWER=1 order by TIME 
+		</select>
+		
+		<!-- 学生:根据主回复ID查询子回复 -->
+		<select id="selectOtherQuestion" resultType="cn.xust.pojo.AnswerHelper">
+			select ID,CONTENT,TIME,REAL_NAME,AVATAR_URL from user,answer where ANSWER_ID=UUID and IS_ANSWER=1 and PRE_ID=#{preID} order by TIME asc,answer.ID asc
+		</select>
+		
+		<!-- 老师 : 列出所有问题 -->
+		<select id="selectTeacherQuestions" resultType="cn.xust.pojo.Question" >
+			select question.ID,question.CONTENT,question.TIME,question.IS_ANSWER from question,answer where answer.QUESTION_ID=question.id and answer.ANSWER_ID = #{uuid} order by question.IS_ANSWER desc,question.TIME desc
+		</select>
+		
+		<!-- 老师: 查看主回复 -->
+		<select id="selectTeacherMainQuestion" resultType="cn.xust.pojo.AnswerHelper" >
+			select  ID,CONTENT,TIME,REAL_NAME,AVATAR_URL from user,answer where ANSWER_ID=UUID and QUESTION_ID=#{questionID} and ANSWER_ID=#{uuid} and IS_ANSWER=1 order by TIME
+		</select>
+		
+		<!-- 老师: 根据主回复ID查询子回复-->
+		<select id="selectTeacherOtherQuestion" resultType="cn.xust.pojo.AnswerHelper">
+			select ID,CONTENT,TIME,REAL_NAME,AVATAR_URL from user,answer where ANSWER_ID=UUID and IS_ANSWER=1 and PRE_ID=#{preID} order by TIME asc,answer.ID asc
+		</select>
+		
+		<!-- 老师:初次评论 -->
+		<update id="teacherFirstComment">
+			update answer set CONTENT=#{content},TIME=#{time},IS_ANSWER=1 where QUESTION_ID=#{questionID} and ANSWER_ID=#{uuid}
+		</update>
+		
+		<!-- 老师初次评论后更新学生提出的问题的状态 -->
+		<update id="updateQuestionStatus">
+			update question set IS_ANSWER=1 where ID = #{questionID}
+		</update>
+		
+		<!-- 老师:多次评论 -->
+		<insert id="teacherComments">
+			insert into answer(CONTENT,QUESTION_ID,ANSWER_ID,TIME,IS_ANSWER,PRE_ID) values(#{content},0,#{uuid},#{time},1,#{preID})
+		</insert>
+		
+		<!-- 局部刷新:主评论刷新 -->
+		<select id="refreshAnswer" resultType="cn.xust.pojo.AnswerHelper">
+			select ID,CONTENT,TIME,REAL_NAME,AVATAR_URL from user,answer where ANSWER_ID=UUID and IS_ANSWER=1 and PRE_ID=#{preID} order by TIME asc,answer.ID asc
+		</select>
+		
+		<!-- 权限查找 -->
+		<select id="selectAuthorizationInfo" resultType="int">
+			select STATUS from user where ACCOUNT = #{account}
+		</select>
+
+		<!-- 查找全部问题,升序排列 -->
+		<select id="selectAllQuestion" resultType="cn.xust.pojo.Question">
+			select question.ID,question.ASK_ID,question.CONTENT,question.TIME,question.IS_ANSWER from question order by ID asc
+		</select>
+
+		<!-- 根据提问者ID查找问题 -->
+		<select id="selectQuestionByaskID" parameterType="int" resultType="cn.xust.pojo.Question">
+			select * from question where ASK_ID = #{askId}
+		</select>
+		
+	    <!-- 根据回答者ID查找问题 -->
+	    <select id="selectQuestionByanswerID" parameterType="int" resultType="cn.xust.pojo.Question">
+	     select question.ID,question.CONTENT,question.ASK_ID,question.TIME,question.IS_ANSWER from question,answer where answer.QUESTION_ID=question.id and answer.ANSWER_ID = #{answerId}
+        </select>
+</mapper>

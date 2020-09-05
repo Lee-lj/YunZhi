@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper  namespace="cn.xust.mapper.AdminMapper">
+
+	<insert id="insertTeacher" parameterType="cn.xust.pojo.Teacher">
+	insert into teacher(name,content,image,time) values(#{name},#{content},#{image},#{time})
+	</insert>
+		
+	<delete id="deleteTeacher" >
+		delete from teacher where id = #{teacherId}
+	</delete>
+	
+	<select id="queryTeacherExit" resultType="int">
+		select count(*) from teacher where id = #{teacherId}
+	</select>
+	
+	<select id="displayTeachers" resultType="cn.xust.pojo.Teacher">
+		select id,name from teacher order by id
+	</select>
+		
+	<select id="queryTeacher" resultType="cn.xust.pojo.Teacher">
+		select  id,name,content,image from teacher where id = #{teacherId}
+	</select>
+		
+	<update id="updateTeacher" parameterType="cn.xust.pojo.Teacher"  >
+		 update teacher
+	     <trim prefix="set" suffixOverrides=",">
+		  <if test="name!=null">name =#{name},</if>
+		  <if test="content!=null">content=#{content},</if>
+		  <if test="image!=null">image=#{image},</if>
+		  <if test="time!=null">time=#{time},</if>
+		 </trim>
+  		where id = #{id}
+	</update>	
+	
+	<insert id="insertPolicy" parameterType="cn.xust.pojo.Policy">
+		insert into policy(introduction,content,time) values (#{introduction},#{content},#{time})
+	</insert>
+	
+	<select id="displayPolicys" resultType="cn.xust.pojo.Policy">
+		select id,introduction from policy order by time desc
+	</select>
+	
+	<select id="queryPolicyExit" resultType="int">
+		select count(*) from policy where id = #{policyId}
+	</select>
+	
+	<delete id="deletePolicy">
+		delete from policy where id = #{policyId}
+	</delete>
+	
+	<select id="queryPolicy" resultType="cn.xust.pojo.Policy">
+		select id,introduction,content from policy where id = #{policyId}
+	</select>
+	
+	<update id="updatePolicy" parameterType="cn.xust.pojo.Policy">
+		update policy
+		  <trim prefix="set" suffixOverrides=",">
+		  <if test="introduction!=null">introduction =#{introduction},</if>
+		  <if test="content!=null">content=#{content},</if>
+		  <if test="time!=null">time=#{time},</if>
+		 </trim>
+  		where id = #{id}
+	</update>
+	
+	<insert id="insertExample" parameterType="cn.xust.pojo.Example">
+		insert into examples(introduction,content,time) values (#{introduction},#{content},#{time})
+	</insert>
+	
+	<select id="displayExamples" resultType="cn.xust.pojo.Example">
+		select id,introduction from examples order by time desc
+	</select>
+	
+	<select id="queryExampleExit" resultType="int">
+		select count(*) from examples where id = #{exampleId}
+	</select>
+	
+	<delete id="deleteExample">
+		delete from examples where id = #{exampleId}
+	</delete>
+	
+	<select id="queryExample" resultType="cn.xust.pojo.Example">
+		select id,introduction,content from examples where id = #{exampleId}
+	</select>
+	
+		<update id="updateExample" parameterType="cn.xust.pojo.Example">
+		update examples
+		  <trim prefix="set" suffixOverrides=",">
+		  <if test="introduction!=null">introduction =#{introduction},</if>
+		  <if test="content!=null">content=#{content},</if>
+		  <if test="time!=null">time=#{time},</if>
+		 </trim>
+  		where id = #{id}
+	</update>
+	
+	
+	<insert id="insertEvent" parameterType="cn.xust.pojo.Event">
+		insert into event(introduction,content,time,begin,end) values (#{introduction},#{content},#{time},#{begin},#{end})
+	</insert>
+	
+	<select id="displayEvents" resultType="cn.xust.pojo.Event">
+		select id,introduction from event order by time desc
+	</select>
+	
+	<select id="queryEventExit" resultType="int">
+		select count(*) from event where id = #{eventId}
+	</select>
+	
+	<delete id="deleteEvent">
+		delete from event where id = #{eventId}
+	</delete>
+	
+	<select id="queryEvent" resultType="cn.xust.pojo.Event">
+		select id,introduction,content,begin,end from event where id = #{eventId}
+	</select>
+	
+	
+		<update id="updateEvent" parameterType="cn.xust.pojo.Event">
+		update event
+		  <trim prefix="set" suffixOverrides=",">
+		  <if test="introduction!=null">introduction =#{introduction},</if>
+		  <if test="content!=null">content=#{content},</if>
+		  <if test="time!=null">time=#{time},</if>
+		  <if test="begin!=null">begin=#{begin},</if>
+		  <if test="end!=null">end=#{end},</if>
+		 </trim>
+  		where id = #{id}
+	</update>
+	
+	<select id="queryIntroduction" resultType="cn.xust.pojo.Introduction">
+		select * from introduction
+	</select>
+	
+	<update id="updateIntroduction" parameterType="cn.xust.pojo.Introduction">
+		update introduction
+		  <trim prefix="set" suffixOverrides=",">
+		  <if test="content!=null">content=#{content},</if>
+		 </trim>
+  		where id = #{id}
+	</update>
+	
+	
+	<select id="displayFeedback" resultType="cn.xust.pojo.Advice">
+		select id,name from feedback order by time desc
+	</select>
+	
+	<select id="queryFeedback" resultType="cn.xust.pojo.Advice" >
+		select * from feedback where id = #{adviceId}
+	</select>
+	
+	<select id="queryFeedbackExit" resultType="int">
+		select count(*) from feedback where id = #{adviceId}
+	</select>
+	
+	<delete id="deleteFeedback">
+		delete from feedback where id = #{adviceId}
+	</delete>
+	
+	
+			
+	<select id="selectUsers" resultType="cn.xust.pojo.User">
+		select UUID,ACCOUNT,REAL_NAME,EMAIL from user where MAJOR in (select id from major where college_id = #{acadamyID}) and STATUS = #{status} and IS_ACTIVATE = #{isActivate} order by UUID
+	</select>
+	
+	<update id="deleteUsers">
+		update user set IS_ACTIVATE = 2 where UUID in 
+					<foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+						#{item}
+					</foreach>
+	</update>
+	
+	<update id="activateUsers">
+		update user set IS_ACTIVATE = 1 where UUID in 
+					<foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+						#{item}
+					</foreach>
+	</update>
+	
+	<select id="selectAdmins" resultType="cn.xust.pojo.User">
+		select UUID,ACCOUNT,REAL_NAME,EMAIL from user where STATUS =2 and IS_ACTIVATE = #{isActivate} order by UUID
+	</select>
+	
+	<select id="query" resultType="cn.xust.pojo.User">
+		select UUID,ACCOUNT,REAL_NAME,EMAIL  from user where concat(IFNULL(ACCOUNT,''),IFNULL(REAL_NAME,''),IFNULL(EMAIL,'')) like concat("%",#{key},"%")
+	</select>
+	
+	<select id="queryAll" resultType="cn.xust.pojo.User">
+		select UUID,ACCOUNT,REAL_NAME,EMAIL,STATUS,IS_ACTIVATE  from user where STATUS in(0,1) and IS_ACTIVATE in(0,1) order by STATUS,IS_ACTIVATE
+	</select>
+	
+	<select id="detailUser" resultType="cn.xust.pojo.UserHelper">
+		select ACCOUNT,REAL_NAME,EMAIL,AVATAR_URL,STATUS,IS_ACTIVATE,COLLEGE_NAME,MAJOR_NAME from user,acadamy,major where user.major = major.id and major.college_id = acadamy.id
+		and user.uuid = #{uuid}
+	</select>
+
+	
+	<insert id="insertUser" parameterType="cn.xust.pojo.User">
+		insert into user(ACCOUNT,PASSWORD,REAL_NAME,MAJOR,STATUS,IS_ACTIVATE) values(#{account},#{password},#{realName},#{major},#{status},1)
+	</insert>
+	
+	<!-- 查找全部问题,升序排列
+	<select id="selectAllQuestion" resultType="cn.xust.pojo.Question">
+		select * from question order by ID asc
+	</select> -->
+
+	<!-- 根据提问者ID查找问题
+	<select id="selectQuestionByaskID" parameterType="int" resultType="cn.xust.pojo.Question">
+		select * from question where ASK_ID=#{askId}
+	</select> -->
+
+	<!-- 根据回答者ID查找问题 
+	<select id="selectQuestionByaskID" parameterType="int" resultType="cn.xust.pojo.Answer">
+		select * from answer where ANSWER_ID=#{answerId}
+	</select>-->
+</mapper>

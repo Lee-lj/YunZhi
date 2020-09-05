@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper  namespace="cn.xust.mapper.TouristMapper">
+	
+
+	
+
+	
+	<select id="displayTeachers" resultType="cn.xust.pojo.Teacher">
+		select id,name,image from teacher order by id
+	</select>
+	<select id="queryTeacher" resultType="cn.xust.pojo.Teacher">
+		select  id,name,content,image,time from teacher where id = #{teacherId}
+	</select>
+
+	
+
+	<select id="displayPolicys" resultType="cn.xust.pojo.Policy">
+		select id,introduction,time from policy order by time desc
+	</select>
+	<select id="queryPolicy" resultType="cn.xust.pojo.Policy">
+		select id,introduction,content,time from policy where id = #{policyId}
+	</select>
+	
+	
+	
+
+	<select id="displayExamples" resultType="cn.xust.pojo.Example">
+		select id,introduction,time from examples order by time desc
+	</select>
+	<select id="queryExample" resultType="cn.xust.pojo.Example">
+		select id,introduction,content,time from examples where id = #{exampleId}
+	</select>
+	
+
+	
+	
+
+	
+	<select id="displayEvents" resultType="cn.xust.pojo.Event">
+		select id,introduction,time from event where 1=1 and
+	
+			<if test="type==1">
+				begin>#{nowTime} and end>=begin
+			</if>
+			<if test="type==2">
+				#{nowTime}>=begin and end>=#{nowTime} and end>=begin
+			</if>
+			<if test="type==3">
+				#{nowTime}>end and end>=begin
+			</if>
+		order by time desc
+	</select>
+	
+	
+	
+	<select id="queryEvent" resultType="cn.xust.pojo.Event">
+		select id,introduction,content,begin,end from event where id = #{eventId}
+	</select>
+	
+	
+
+	
+	<select id="queryIntroduction" resultType="cn.xust.pojo.Introduction">
+		select * from introduction
+	</select>
+	
+
+
+	
+
+		
+</mapper>
